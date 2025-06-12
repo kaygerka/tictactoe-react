@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        .game {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .tile {
+            width: 100px;
+            height: 100px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .game-info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        button {
+            margin-top: 10px;
+            font-size: 16px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        
+        // COMPONENT #1
+        const Square = ({ value, onClick }) => (
+            <button className="tile" onClick={onClick}>{value}</button>
+        );
+
+        // COMPONENT #2
+        const Board = ({ squares, onClick }) => (
+            <div className="board">
+                {squares.map((square, i) => (
+                    // NESTING
+                    <Square key={i} value={square} onClick={() => onClick(i)} />
+                ))}
+            </div>
+        );
+
+        // CUSTOM HOOK
+        const useGameState = () => {
+            // STATE #1
+            const [board, setBoard] = React.useState(Array(9).fill(null));
+            const [xIsNext, setXIsNext] = React.useState(true);
+
+            // EFFECT: DEPENDENCY
+            React.useEffect(() => {
+                console.log('Board updated:', board);
+            }, [board]);
+
+            // EFFECT: MOUNT
+            React.useEffect(() => {
+                console.log('Game started!');
+            }, []);
+
+            return { board, xIsNext, setBoard, setXIsNext };
+        };
+
+        const calculateWinner = (squares) => {
+            const lines = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6],
+            ];
+            for (let i = 0; i < lines.length; i++) {
+                const [a, b, c] = lines[i];
+                if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+                    return squares[a];
+                }
+            }
+            return null;
+        };
+
+        const checkTie = (squares) => {
+            return squares.every(square => square !== null);
+        };
+
+        // ANOTHER COMPONENT
+        function App() {
+            // CUSTOM HOOK
+            const { board, xIsNext, setBoard, setXIsNext } = useGameState();
+            const [winner, setWinner] = React.useState(null);
+            const [isTie, setIsTie] = React.useState(false);
+
+            React.useEffect(() => {
+                const calculatedWinner = calculateWinner(board);
+                setWinner(calculatedWinner);
+                if (!calculatedWinner && checkTie(board)) {
+                    setIsTie(true);
+                } else {
+                    setIsTie(false);
+                }
+            }, [board]);
+
+            const handleClick = (i) => {
+                if (winner || board[i] || isTie) return;
+                const newBoard = board.slice();
+                newBoard[i] = xIsNext ? 'X' : 'O';
+                // STATE'S SET FUNCTION
+                setBoard(newBoard);
+                setXIsNext(!xIsNext);
+            };
+
+            const resetGame = () => {
+                setBoard(Array(9).fill(null));
+                setXIsNext(true);
+                setWinner(null);
+                setIsTie(false);
+            };
+
+            return (
+                <div className="game">
+                    <h1>Tic Tac Toe</h1>
+                    {/* NESTING */}
+                    {/* PROPS */}
+                    <Board squares={board} onClick={handleClick} />
+                    <div className="game-info">
+                        {winner ? `Winner: ${winner}` : 
+                         isTie ? "It's a tie!" : 
+                         `Next player: ${xIsNext ? 'X' : 'O'}`}
+                    </div>
+                    <button onClick={resetGame}>Reset Game</button>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
